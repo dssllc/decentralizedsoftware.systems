@@ -20,6 +20,57 @@ body {
     background: radial-gradient(circle at center, rgb(220, 220, 220), rgb(51, 51, 51));
 }
 
+/* Shape click counter */
+#shapeCounter {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    z-index: 2;
+    background-color: rgba(51, 51, 51, 0.8);
+    border-radius: 10px;
+    padding: 15px;
+    pointer-events: none;
+    backdrop-filter: blur(5px);
+}
+
+.counter-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 8px;
+    color: rgb(220, 220, 220);
+    font-size: 1.2em;
+}
+
+.counter-item:last-child {
+    margin-bottom: 0;
+}
+
+.shape-icon {
+    font-size: 1.5em;
+    width: 24px;
+    text-align: center;
+    line-height: 1;
+}
+
+.count {
+    font-family: "Libre Baskerville", serif;
+    font-weight: 700;
+    min-width: 30px;
+    text-align: right;
+    transition: transform 0.2s ease, color 0.2s ease;
+}
+
+.count.increment {
+    animation: countPulse 0.3s ease;
+}
+
+@keyframes countPulse {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.3); color: rgb(255, 255, 255); }
+    100% { transform: scale(1); }
+}
+
 #content {
     position: relative;
     z-index: 1;
@@ -93,7 +144,7 @@ footer p {
     }
 
     .description {
-        max-width: 90%;
+        max-width: 100%;
     }
 
     main {
@@ -107,5 +158,27 @@ footer p {
     footer p {
         font-size: 0.7em;
         text-align: center;
+    }
+
+    /* Adjust shape counter for mobile */
+    #shapeCounter {
+        top: 10px;
+        right: 10px;
+        padding: 10px;
+        font-size: 0.85em;
+    }
+
+    .counter-item {
+        gap: 8px;
+        margin-bottom: 6px;
+    }
+
+    .shape-icon {
+        font-size: 1.3em;
+        width: 20px;
+    }
+
+    .count {
+        min-width: 24px;
     }
 }

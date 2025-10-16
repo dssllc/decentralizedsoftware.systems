@@ -1,6 +1,28 @@
 const canvas = document.getElementById("renderCanvas");
 const engine = new BABYLON.Engine(canvas, true);
 
+// Shape click counter tracking
+const shapeClickCounts = {
+    box: 0,
+    sphere: 0,
+    cylinder: 0,
+    torus: 0,
+    octahedron: 0
+};
+
+function updateShapeCounter(shapeType) {
+    shapeClickCounts[shapeType]++;
+    const counterItem = document.querySelector(`.counter-item[data-shape="${shapeType}"] .count`);
+    if (counterItem) {
+        counterItem.textContent = shapeClickCounts[shapeType];
+        // Add pulse animation
+        counterItem.classList.remove('increment');
+        void counterItem.offsetWidth; // Trigger reflow
+        counterItem.classList.add('increment');
+        setTimeout(() => counterItem.classList.remove('increment'), 300);
+    }
+}
+
 const createScene = function () {
     const scene = new BABYLON.Scene(engine);
     // Radial gradient background will be handled by CSS
@@ -138,6 +160,9 @@ const createScene = function () {
             z: (Math.random() - 0.5) * 0.02
         };
 
+        // Store shape type for counter
+        shape.shapeType = shapeType;
+
         // Create unique material with random color for each shape
         const shapeMaterial = new BABYLON.StandardMaterial("shapeMat" + Math.random(), scene);
         shapeMaterial.wireframe = true;
@@ -171,6 +196,9 @@ const createScene = function () {
                 function () {
                     shape.isClicked = true;
                     shape.clickScale = 0; // Track time since click for pop effect
+
+                    // Update shape counter
+                    updateShapeCounter(shape.shapeType);
 
                     // Play pop sound
                     playPopSound();
