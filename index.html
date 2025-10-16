@@ -34,6 +34,7 @@
             width: 100%;
             height: 100%;
             z-index: 0;
+            background: radial-gradient(circle at center, rgb(220, 220, 220), rgb(51, 51, 51));
         }
 
         #fadeOverlay {
@@ -44,13 +45,12 @@
             height: 100%;
             pointer-events: none;
             z-index: 1;
-            /* background: linear-gradient(to bottom, rgba(220, 220, 220, 1) 31%, rgba(220, 220, 220, 1) 35%, rgba(220, 220, 220, 0) 60%); */
         }
 
         #content {
             position: relative;
             z-index: 1;
-            color: black;
+            color: rgb(220, 220, 220);
             padding: 20px;
             pointer-events: none;
         }
@@ -77,9 +77,9 @@
         }
 
         main a {
-            color: black;
+            color: rgb(220, 220, 220);
             text-decoration: none;
-            border-bottom: 1px solid black;
+            border-bottom: 1px solid rgb(220, 220, 220);
             pointer-events: auto;
         }
 
@@ -92,6 +92,25 @@
 
         footer p {
             font-size: 0.9em;
+        }
+
+        /* Mobile viewport media query */
+        @media (max-width: 768px) {
+            header h1 {
+                font-size: 2em;
+            }
+            
+            main {
+                max-width: 75%;
+            }
+            
+            main p {
+                font-size: 0.9em;
+            }
+
+            footer p {
+                font-size: 0.7em;
+            }
         }
     </style>
 </head>
@@ -119,7 +138,8 @@
 
         const createScene = function () {
             const scene = new BABYLON.Scene(engine);
-            scene.clearColor = BABYLON.Color4.FromInts(220, 220, 220, 255);
+            // Radial gradient background will be handled by CSS
+            scene.clearColor = new BABYLON.Color4(0, 0, 0, 0); // Transparent to show CSS background
 
             // Camera: Fixed camera angled downward
             const camera = new BABYLON.UniversalCamera("camera", new BABYLON.Vector3(0, 5, -10), scene);
@@ -168,11 +188,11 @@
             const tileSubdiv = 20; // Low-poly effect
             const planes = [];
 
-            // Material with wireframe
+            // Material with wireframe - dark gray
             const material = new BABYLON.StandardMaterial("material", scene);
             material.wireframe = true;
-            material.emissiveColor = new BABYLON.Color3(0, 0, 0);
-            material.diffuseColor = new BABYLON.Color3(0, 0, 0);
+            material.emissiveColor = new BABYLON.Color3(0.2, 0.2, 0.2);
+            material.diffuseColor = new BABYLON.Color3(0.2, 0.2, 0.2);
 
             // Floating shapes system
             const floatingShapes = [];
@@ -340,6 +360,57 @@
             for (let i = 0; i < 8; i++) {
                 createFloatingShape();
             }
+            
+            // Flowing particles system - accent the radial gradient
+            const flowingParticles = [];
+            
+            function createFlowingParticle() {
+                const particle = BABYLON.MeshBuilder.CreateSphere("particle", { 
+                    diameter: 0.15, // Consistent small size
+                    segments: 4
+                }, scene);
+                
+                // Start from far distance (center of radial gradient)
+                particle.position.x = (Math.random() - 0.5) * 60;
+                particle.position.y = Math.random() * 15;
+                particle.position.z = camera.position.z + Math.random() * 150 + 100;
+                
+                // Create material - light gray to white to match gradient
+                const particleMaterial = new BABYLON.StandardMaterial("flowParticleMat" + Math.random(), scene);
+                const brightness = 0.7 + Math.random() * 0.3;
+                const particleColor = new BABYLON.Color3(brightness, brightness, brightness);
+                particleMaterial.emissiveColor = particleColor;
+                particleMaterial.diffuseColor = particleColor;
+                particle.material = particleMaterial;
+                
+                // Create trail effect for speed streaks
+                const trail = new BABYLON.TrailMesh("trail", particle, scene, 0.2, 30, true);
+                const trailMaterial = new BABYLON.StandardMaterial("trailMat" + Math.random(), scene);
+                trailMaterial.emissiveColor = particleColor;
+                trailMaterial.alpha = 0.4;
+                trail.material = trailMaterial;
+                particle.trail = trail; // Store reference for cleanup
+                
+                // Fade in
+                particle.visibility = 0;
+                particle.fadeInSpeed = 0.02;
+                particle.isFadingIn = true;
+                particle.maxVisibility = 0.6 + Math.random() * 0.4; // Vary opacity
+                
+                // Movement speed - consistent at 1.5x camera speed (camera moves at 0.2)
+                particle.flowSpeed = 0.3;
+                
+                // Slight drift to sides
+                particle.driftX = (Math.random() - 0.5) * 0.05;
+                particle.driftY = (Math.random() - 0.5) * 0.02;
+                
+                flowingParticles.push(particle);
+            }
+            
+            // Create initial flowing particles
+            for (let i = 0; i < 25; i++) {
+                createFlowingParticle();
+            }
 
             // Create and noise each plane
             for (let t = 0; t < numTiles; t++) {
@@ -464,6 +535,39 @@
                 // Spawn new shapes occasionally
                 if (Math.random() < 0.02) {
                     createFloatingShape();
+                }
+                
+                // Animate and recycle flowing particles
+                for (let i = flowingParticles.length - 1; i >= 0; i--) {
+                    const particle = flowingParticles[i];
+                    
+                    // Fade in animation
+                    if (particle.isFadingIn) {
+                        particle.visibility += particle.fadeInSpeed;
+                        if (particle.visibility >= particle.maxVisibility) {
+                            particle.visibility = particle.maxVisibility;
+                            particle.isFadingIn = false;
+                        }
+                    }
+                    
+                    // Move particle (relative to camera movement, appears to flow past)
+                    particle.position.z -= particle.flowSpeed;
+                    particle.position.x += particle.driftX;
+                    particle.position.y += particle.driftY;
+                    
+                    // Remove particles that passed the camera
+                    if (particle.position.z < camera.position.z - 30) {
+                        if (particle.trail) {
+                            particle.trail.dispose();
+                        }
+                        particle.dispose();
+                        flowingParticles.splice(i, 1);
+                    }
+                }
+                
+                // Spawn new flowing particles occasionally
+                if (Math.random() < 0.05) {
+                    createFlowingParticle();
                 }
             });
 
