@@ -1,0 +1,463 @@
+const canvas = document.getElementById("renderCanvas");
+const engine = new BABYLON.Engine(canvas, true);
+
+const createScene = function () {
+    const scene = new BABYLON.Scene(engine);
+    // Radial gradient background will be handled by CSS
+    scene.clearColor = new BABYLON.Color4(0, 0, 0, 0); // Transparent to show CSS background
+
+    // Camera: Fixed camera angled downward
+    const camera = new BABYLON.UniversalCamera("camera", new BABYLON.Vector3(0, 5, -10), scene);
+    camera.setTarget(new BABYLON.Vector3(0, 0, 20));
+    // Disable user controls for fixed camera angle
+    // camera.attachControl(canvas, true);
+
+    // Light
+    const light = new BABYLON.HemisphericLight("light", new BABYLON.Vector3(0, 1, 0), scene);
+    light.intensity = 0.7;
+
+    // Mountain noise function (static) - More jagged and contrasting
+    function mountainNoise(x, z) {
+        let value = 0;
+        let amplitude = 2.5;
+        let frequency = 0.08;
+        let octaves = 6;
+
+        // Add multiple layers of noise with sharper peaks
+        for (let o = 0; o < octaves; o++) {
+            // Use abs for sharp ridges
+            let noise = Math.abs(Math.sin(x * frequency + z * frequency * 0.7));
+            noise = Math.pow(noise, 1.5); // Sharpen the peaks
+            value += noise * amplitude;
+            frequency *= 2.3;
+            amplitude *= 0.4;
+        }
+
+        // Add some random sharp spikes
+        const spike1 = Math.pow(Math.abs(Math.sin(x * 0.3) * Math.cos(z * 0.3)), 3) * 3;
+        const spike2 = Math.pow(Math.abs(Math.sin(x * 0.15 + z * 0.15)), 4) * 2;
+
+        // Create valleys by subtracting base level
+        value = value + spike1 + spike2 - 4.5;
+
+        // Add some noise variation
+        value += (Math.random() * 0.3 - 0.15);
+
+        return value;
+    }
+
+    // Plane tiling parameters
+    const numTiles = 4;
+    const tileLength = 50;
+    const tileWidth = 90;
+    const tileSubdiv = 20; // Low-poly effect
+    const planes = [];
+
+    // Material with wireframe - dark gray
+    const material = new BABYLON.StandardMaterial("material", scene);
+    material.wireframe = true;
+    material.emissiveColor = new BABYLON.Color3(0.2, 0.2, 0.2);
+    material.diffuseColor = new BABYLON.Color3(0.2, 0.2, 0.2);
+
+    // Floating shapes system
+    const floatingShapes = [];
+    const shapeTypes = ['box', 'sphere', 'cylinder', 'torus', 'octahedron'];
+
+    // Audio context for click sounds
+    const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+
+    function playPopSound() {
+        const oscillator = audioContext.createOscillator();
+        const gainNode = audioContext.createGain();
+
+        oscillator.connect(gainNode);
+        gainNode.connect(audioContext.destination);
+
+        // Randomize the pitch slightly for variety
+        const pitchVariation = 0.8 + Math.random() * 0.4; // 0.8x to 1.2x pitch
+        const startFreq = 800 * pitchVariation;
+        const endFreq = 200 * pitchVariation;
+
+        // Create a "pop" sound with pitch sweep
+        oscillator.frequency.setValueAtTime(startFreq, audioContext.currentTime);
+        oscillator.frequency.exponentialRampToValueAtTime(endFreq, audioContext.currentTime + 0.1);
+
+        // Volume envelope for pop effect
+        gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
+        gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.1);
+
+        oscillator.type = 'sine';
+        oscillator.start(audioContext.currentTime);
+        oscillator.stop(audioContext.currentTime + 0.1);
+    }
+
+    function createFloatingShape() {
+        const shapeType = shapeTypes[Math.floor(Math.random() * shapeTypes.length)];
+        const size = Math.random() * 3 + 1;
+        let shape;
+
+        switch (shapeType) {
+            case 'box':
+                shape = BABYLON.MeshBuilder.CreateBox("box", { size: size }, scene);
+                break;
+            case 'sphere':
+                shape = BABYLON.MeshBuilder.CreateSphere("sphere", {
+                    diameter: size,
+                    segments: 4  // Low-poly sphere
+                }, scene);
+                break;
+            case 'cylinder':
+                shape = BABYLON.MeshBuilder.CreateCylinder("cylinder", { height: size, diameter: size * 0.6 }, scene);
+                break;
+            case 'torus':
+                shape = BABYLON.MeshBuilder.CreateTorus("torus", {
+                    diameter: size,
+                    thickness: size * 0.3,
+                    tessellation: 10  // Low-poly torus
+                }, scene);
+                break;
+            case 'octahedron':
+                shape = BABYLON.MeshBuilder.CreatePolyhedron("octahedron", { type: 1, size: size * 0.6 }, scene);
+                break;
+        }
+
+        // Position further ahead of camera, floating above terrain
+        shape.position.x = (Math.random() - 0.5) * 40;
+        shape.position.y = Math.random() * 10 + 5;
+        shape.position.z = camera.position.z + Math.random() * 100 + 80;
+
+        // Random rotation
+        shape.rotation.x = Math.random() * Math.PI * 2;
+        shape.rotation.y = Math.random() * Math.PI * 2;
+        shape.rotation.z = Math.random() * Math.PI * 2;
+
+        // Store rotation speed
+        shape.rotationSpeed = {
+            x: (Math.random() - 0.5) * 0.02,
+            y: (Math.random() - 0.5) * 0.02,
+            z: (Math.random() - 0.5) * 0.02
+        };
+
+        // Create unique material with random color for each shape
+        const shapeMaterial = new BABYLON.StandardMaterial("shapeMat" + Math.random(), scene);
+        shapeMaterial.wireframe = true;
+
+        // Generate random vibrant color
+        const randomColor = BABYLON.Color3.FromHSV(
+            Math.random() * 360,  // Hue: random across full spectrum
+            0.7 + Math.random() * 0.3,  // Saturation: 70-100% for vibrant colors
+            0.6 + Math.random() * 0.4   // Value/Brightness: 60-100%
+        );
+
+        shapeMaterial.emissiveColor = randomColor;
+        shapeMaterial.diffuseColor = randomColor;
+        shape.material = shapeMaterial;
+
+        // Fade in effect
+        shape.visibility = 0;
+        shape.fadeInSpeed = 0.02;
+        shape.isFadingIn = true;
+
+        // Shrink and disappear properties
+        shape.isClicked = false;
+        shape.shrinkSpeed = 0.05;
+        shape.originalScaling = shape.scaling.clone();
+
+        // Make shape clickable
+        shape.actionManager = new BABYLON.ActionManager(scene);
+        shape.actionManager.registerAction(
+            new BABYLON.ExecuteCodeAction(
+                BABYLON.ActionManager.OnPickTrigger,
+                function () {
+                    shape.isClicked = true;
+                    shape.clickScale = 0; // Track time since click for pop effect
+
+                    // Play pop sound
+                    playPopSound();
+
+                    // Speed up rotation on click
+                    shape.rotationSpeed.x *= 3;
+                    shape.rotationSpeed.y *= 3;
+                    shape.rotationSpeed.z *= 3;
+
+                    // Create particle burst effect
+                    const particleSystem = new BABYLON.ParticleSystem("particles", 30, scene);
+                    particleSystem.particleTexture = new BABYLON.Texture("https://assets.babylonjs.com/textures/flare.png", scene);
+                    particleSystem.emitter = shape.position.clone();
+                    particleSystem.minEmitBox = new BABYLON.Vector3(-0.5, -0.5, -0.5);
+                    particleSystem.maxEmitBox = new BABYLON.Vector3(0.5, 0.5, 0.5);
+
+                    // Colors matching the shape
+                    particleSystem.color1 = new BABYLON.Color4(shapeMaterial.emissiveColor.r, shapeMaterial.emissiveColor.g, shapeMaterial.emissiveColor.b, 1);
+                    particleSystem.color2 = new BABYLON.Color4(shapeMaterial.emissiveColor.r * 0.7, shapeMaterial.emissiveColor.g * 0.7, shapeMaterial.emissiveColor.b * 0.7, 0.5);
+                    particleSystem.colorDead = new BABYLON.Color4(0, 0, 0, 0);
+
+                    particleSystem.minSize = 0.3;
+                    particleSystem.maxSize = 0.8;
+                    particleSystem.minLifeTime = 0.3;
+                    particleSystem.maxLifeTime = 0.6;
+                    particleSystem.emitRate = 100;
+                    particleSystem.blendMode = BABYLON.ParticleSystem.BLENDMODE_ADD;
+                    particleSystem.gravity = new BABYLON.Vector3(0, 0, 0); // No gravity for spherical burst
+                    particleSystem.direction1 = new BABYLON.Vector3(-1, -1, -1); // All directions
+                    particleSystem.direction2 = new BABYLON.Vector3(1, 1, 1); // All directions
+                    particleSystem.minEmitPower = 4;
+                    particleSystem.maxEmitPower = 8;
+                    particleSystem.updateSpeed = 0.02;
+
+                    particleSystem.start();
+
+                    // Auto-dispose particle system after burst
+                    setTimeout(function () {
+                        particleSystem.stop();
+                        setTimeout(function () {
+                            particleSystem.dispose();
+                        }, 1000);
+                    }, 100);
+                }
+            )
+        );
+
+        floatingShapes.push(shape);
+    }
+
+    // Create initial shapes
+    for (let i = 0; i < 8; i++) {
+        createFloatingShape();
+    }
+
+    // Flowing particles system - accent the radial gradient
+    const flowingParticles = [];
+
+    function createFlowingParticle() {
+        const particle = BABYLON.MeshBuilder.CreateSphere("particle", {
+            diameter: 0.05, // Tiny size to match thin trails
+            segments: 4
+        }, scene);
+
+        // Start from far distance (center of radial gradient)
+        particle.position.x = (Math.random() - 0.5) * 60;
+        particle.position.y = Math.random() * 15;
+        particle.position.z = camera.position.z + Math.random() * 150 + 100;
+
+        // Create material - light gray to white to match gradient
+        const particleMaterial = new BABYLON.StandardMaterial("flowParticleMat" + Math.random(), scene);
+        const brightness = 0.7 + Math.random() * 0.3;
+        const particleColor = new BABYLON.Color3(brightness, brightness, brightness);
+        particleMaterial.emissiveColor = particleColor;
+        particleMaterial.diffuseColor = particleColor;
+        particle.material = particleMaterial;
+
+        // Store color for later trail creation
+        particle.particleColor = particleColor;
+
+        // Trail will be created after particle has moved (don't create yet)
+        particle.trail = null;
+
+        // Fade in
+        particle.visibility = 0;
+        particle.fadeInSpeed = 0.02;
+        particle.isFadingIn = true;
+        particle.maxVisibility = 0.6 + Math.random() * 0.4; // Vary opacity
+
+        // Movement speed - consistent at 1.5x camera speed (camera moves at 0.2)
+        particle.flowSpeed = 0.3;
+
+        // Delay before creating trail (let particle move first)
+        particle.frameCount = 0;
+        particle.trailDelayFrames = 20; // Wait 20 frames before creating trail
+
+        // Slight drift to sides
+        particle.driftX = (Math.random() - 0.5) * 0.05;
+        particle.driftY = (Math.random() - 0.5) * 0.02;
+
+        flowingParticles.push(particle);
+    }
+
+    // Create initial flowing particles
+    for (let i = 0; i < 25; i++) {
+        createFlowingParticle();
+    }
+
+    // Create and noise each plane
+    for (let t = 0; t < numTiles; t++) {
+        const plane = BABYLON.MeshBuilder.CreateGround("ground" + t, {
+            width: tileWidth,
+            height: tileLength,
+            subdivisions: tileSubdiv,
+            updatable: true
+        }, scene);
+        plane.position.z = t * tileLength;
+        plane.material = material;
+
+        // Apply noise once
+        let positions = plane.getVerticesData(BABYLON.VertexBuffer.PositionKind);
+        for (let i = 0; i < positions.length; i += 3) {
+            const x = positions[i];
+            const z = positions[i + 2];
+            positions[i + 1] = mountainNoise(x, z + plane.position.z);
+        }
+        plane.updateVerticesData(BABYLON.VertexBuffer.PositionKind, positions);
+        const normals = [];
+        BABYLON.VertexData.ComputeNormals(positions, plane.getIndices(), normals);
+        plane.updateVerticesData(BABYLON.VertexBuffer.NormalKind, normals);
+
+        // Set initial visibility (start visible for initial tiles)
+        plane.visibility = 1;
+        plane.isFadingIn = false;
+        plane.fadeInSpeed = 0.015;
+
+        planes.push(plane);
+    }
+
+    // Animate camera and recycle planes
+    scene.registerBeforeRender(function () {
+        camera.position.z += 0.2;
+        camera.setTarget(new BABYLON.Vector3(0, 3, camera.position.z + 30));
+
+        // Recycle planes behind camera
+        for (let plane of planes) {
+            // Fade in animation for planes
+            if (plane.isFadingIn) {
+                plane.visibility += plane.fadeInSpeed;
+                if (plane.visibility >= 1) {
+                    plane.visibility = 1;
+                    plane.isFadingIn = false;
+                }
+            }
+
+            if (plane.position.z + tileLength < camera.position.z - 10) {
+                // Move plane ahead
+                plane.position.z += numTiles * tileLength;
+                // Re-noise for new Z
+                let positions = plane.getVerticesData(BABYLON.VertexBuffer.PositionKind);
+                for (let i = 0; i < positions.length; i += 3) {
+                    const x = positions[i];
+                    const z = positions[i + 2];
+                    positions[i + 1] = mountainNoise(x, z + plane.position.z);
+                }
+                plane.updateVerticesData(BABYLON.VertexBuffer.PositionKind, positions);
+                const normals = [];
+                BABYLON.VertexData.ComputeNormals(positions, plane.getIndices(), normals);
+                plane.updateVerticesData(BABYLON.VertexBuffer.NormalKind, normals);
+
+                // Start fade in for recycled plane
+                plane.visibility = 0;
+                plane.isFadingIn = true;
+            }
+        }
+
+        // Animate and recycle floating shapes
+        for (let i = floatingShapes.length - 1; i >= 0; i--) {
+            const shape = floatingShapes[i];
+
+            // Shrink and fade out when clicked
+            if (shape.isClicked) {
+                shape.clickScale = shape.clickScale || 0;
+
+                // Brief scale-up "pop" effect for first few frames
+                if (shape.clickScale < 5) {
+                    const popScale = 1 + (0.3 * Math.sin(shape.clickScale * Math.PI / 5));
+                    shape.scaling.x = shape.originalScaling.x * popScale;
+                    shape.scaling.y = shape.originalScaling.y * popScale;
+                    shape.scaling.z = shape.originalScaling.z * popScale;
+                    shape.clickScale++;
+                } else {
+                    // Then shrink
+                    shape.scaling.x -= shape.shrinkSpeed;
+                    shape.scaling.y -= shape.shrinkSpeed;
+                    shape.scaling.z -= shape.shrinkSpeed;
+                    shape.visibility -= 0.03;
+                }
+
+                // Remove when too small or invisible
+                if (shape.scaling.x <= 0 || shape.visibility <= 0) {
+                    shape.dispose();
+                    floatingShapes.splice(i, 1);
+                    continue;
+                }
+            }
+
+            // Fade in animation
+            if (shape.isFadingIn) {
+                shape.visibility += shape.fadeInSpeed;
+                if (shape.visibility >= 1) {
+                    shape.visibility = 1;
+                    shape.isFadingIn = false;
+                }
+            }
+
+            // Rotate shapes
+            shape.rotation.x += shape.rotationSpeed.x;
+            shape.rotation.y += shape.rotationSpeed.y;
+            shape.rotation.z += shape.rotationSpeed.z;
+
+            // Remove shapes that are behind camera
+            if (shape.position.z < camera.position.z - 20) {
+                shape.dispose();
+                floatingShapes.splice(i, 1);
+            }
+        }
+
+        // Spawn new shapes occasionally
+        if (Math.random() < 0.02) {
+            createFloatingShape();
+        }
+
+        // Animate and recycle flowing particles
+        for (let i = flowingParticles.length - 1; i >= 0; i--) {
+            const particle = flowingParticles[i];
+
+            // Fade in animation
+            if (particle.isFadingIn) {
+                particle.visibility += particle.fadeInSpeed;
+                if (particle.visibility >= particle.maxVisibility) {
+                    particle.visibility = particle.maxVisibility;
+                    particle.isFadingIn = false;
+                }
+            }
+
+            // Create trail after delay (so particle has moved and no long initial streak)
+            particle.frameCount++;
+            if (particle.frameCount === particle.trailDelayFrames && !particle.trail) {
+                const trail = new BABYLON.TrailMesh("trail", particle, scene, 0.05, 30, true);
+                const trailMaterial = new BABYLON.StandardMaterial("trailMat" + Math.random(), scene);
+                trailMaterial.emissiveColor = particle.particleColor;
+                trailMaterial.alpha = 0.3;
+                trail.material = trailMaterial;
+                particle.trail = trail;
+            }
+
+            // Move particle (relative to camera movement, appears to flow past)
+            particle.position.z -= particle.flowSpeed;
+            particle.position.x += particle.driftX;
+            particle.position.y += particle.driftY;
+
+            // Remove particles that passed the camera
+            if (particle.position.z < camera.position.z - 30) {
+                if (particle.trail) {
+                    particle.trail.dispose();
+                }
+                particle.dispose();
+                flowingParticles.splice(i, 1);
+            }
+        }
+
+        // Spawn new flowing particles occasionally
+        if (Math.random() < 0.05) {
+            createFlowingParticle();
+        }
+    });
+
+    return scene;
+};
+
+const scene = createScene();
+
+engine.runRenderLoop(function () {
+    scene.render();
+});
+
+window.addEventListener("resize", function () {
+    engine.resize();
+});
