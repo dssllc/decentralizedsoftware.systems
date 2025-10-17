@@ -10,6 +10,10 @@ body {
     font-style: normal;
 }
 
+html {
+    overflow: hidden;
+}
+
 #renderCanvas {
     position: fixed;
     top: 0;
@@ -18,6 +22,21 @@ body {
     height: 100%;
     z-index: 0;
     background: radial-gradient(circle at center, rgb(220, 220, 220), rgb(51, 51, 51));
+}
+
+#counterContainer {
+    display: flex;
+    flex-direction: row;
+    max-width: 40%;
+
+    align-items: center;
+}
+
+#counterContainer canvas {
+    width: 80px;
+    height: 80px;
+    pointer-events: none;
+    flex-shrink: 0;
 }
 
 #content {
@@ -107,5 +126,15 @@ footer p {
     footer p {
         font-size: 0.7em;
         text-align: center;
+    }
+
+    #counterContainer {
+        max-width: 90%;
+        gap: 5px;
+    }
+    
+    #counterContainer canvas {
+        width: 60px;
+        height: 60px;
     }
 }

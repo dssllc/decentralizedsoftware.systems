@@ -1,6 +1,150 @@
 const canvas = document.getElementById("renderCanvas");
 const engine = new BABYLON.Engine(canvas, true);
 
+// Counter scene setup - 5 separate engines for 5 canvases
+const counterEngines = [];
+const counterScenes = [];
+for (let i = 0; i < 5; i++) {
+    const counterCanvas = document.getElementById("counterCanvas" + i);
+    const counterEngine = new BABYLON.Engine(counterCanvas, true, { preserveDrawingBuffer: true, stencil: true });
+    counterEngines.push(counterEngine);
+}
+
+// Shape click counter tracking
+const shapeClickCounts = {
+    box: 0,
+    sphere: 0,
+    cylinder: 0,
+    torus: 0,
+    octahedron: 0
+};
+
+const counterTextBlocks = {};
+
+function updateShapeCounter(shapeType) {
+    shapeClickCounts[shapeType]++;
+    const textBlock = counterTextBlocks[shapeType];
+    if (textBlock) {
+        textBlock.text = shapeClickCounts[shapeType].toString();
+        // Pulse animation
+        textBlock.fontSize = 22;
+        textBlock.color = "white";
+        setTimeout(() => {
+            textBlock.fontSize = 18;
+            textBlock.color = "rgb(220, 220, 220)";
+        }, 150);
+    }
+}
+
+// Create individual counter scene for each canvas
+const createCounterScene = function(engineIndex, shapeType, color) {
+    const scene = new BABYLON.Scene(counterEngines[engineIndex]);
+    scene.clearColor = new BABYLON.Color4(0, 0, 0, 0); // Transparent background
+    
+    // Camera
+    const camera = new BABYLON.FreeCamera("counterCamera", new BABYLON.Vector3(0, 0, -2), scene);
+    camera.setTarget(BABYLON.Vector3.Zero());
+    
+    // Light
+    const light = new BABYLON.HemisphericLight("counterLight", new BABYLON.Vector3(0, 1, 0), scene);
+    light.intensity = 1;
+    
+    // Create GUI
+    const advancedTexture = BABYLON.GUI.AdvancedDynamicTexture.CreateFullscreenUI("CounterUI" + engineIndex, true, scene);
+    
+    const size = 0.5;
+    let shape;
+    
+    // Create shape at origin
+    switch (shapeType) {
+        case 'box':
+            shape = BABYLON.MeshBuilder.CreateBox("counterBox", { size: size * 0.8 }, scene);
+            break;
+        case 'sphere':
+            shape = BABYLON.MeshBuilder.CreateSphere("counterSphere", { diameter: size, segments: 4 }, scene);
+            break;
+        case 'cylinder':
+            shape = BABYLON.MeshBuilder.CreateCylinder("counterCylinder", { height: size, diameter: size * 0.6 }, scene);
+            break;
+        case 'torus':
+            shape = BABYLON.MeshBuilder.CreateTorus("counterTorus", { diameter: size, thickness: size * 0.3, tessellation: 10 }, scene);
+            break;
+        case 'octahedron':
+            shape = BABYLON.MeshBuilder.CreatePolyhedron("counterOctahedron", { type: 1, size: size * 0.5 }, scene);
+            break;
+    }
+    
+    // Responsive positioning based on viewport
+    const isMobile = window.innerWidth <= 768;
+    const shapeXPosition = isMobile ? -0.3 : -0.2; // Closer on mobile
+    const textOffset = isMobile ? -4 : -6; // Closer on mobile
+    
+    shape.position = new BABYLON.Vector3(shapeXPosition, 0, 0); // Slightly left for number on right
+    
+    // Create wireframe material
+    const material = new BABYLON.StandardMaterial("counterMat", scene);
+    material.wireframe = true;
+    material.emissiveColor = color;
+    material.diffuseColor = color;
+    shape.material = material;
+    
+    // Create text block
+    const textBlock = new BABYLON.GUI.TextBlock();
+    textBlock.text = "0";
+    textBlock.color = "rgb(220, 220, 220)";
+    textBlock.fontSize = isMobile ? 14 : 16; // Smaller font on mobile
+    textBlock.fontFamily = "Libre Baskerville";
+    textBlock.fontWeight = "700";
+    textBlock.horizontalAlignment = BABYLON.GUI.Control.HORIZONTAL_ALIGNMENT_RIGHT;
+    textBlock.verticalAlignment = BABYLON.GUI.Control.VERTICAL_ALIGNMENT_CENTER;
+    textBlock.leftInPixels = textOffset;
+    textBlock.widthInPixels = 30;
+    textBlock.heightInPixels = 30;
+    textBlock.textHorizontalAlignment = BABYLON.GUI.Control.HORIZONTAL_ALIGNMENT_CENTER;
+    textBlock.textVerticalAlignment = BABYLON.GUI.Control.VERTICAL_ALIGNMENT_CENTER;
+    advancedTexture.addControl(textBlock);
+    
+    // Store references for resize updates
+    shape.initialXPosition = shapeXPosition;
+    
+    // Update positioning on resize
+    window.addEventListener("resize", function() {
+        const isMobileNow = window.innerWidth <= 768;
+        const newShapeX = isMobileNow ? -0.15 : -0.2;
+        const newTextOffset = isMobileNow ? -4 : -6;
+        const newFontSize = isMobileNow ? 14 : 16;
+        
+        shape.position.x = newShapeX;
+        textBlock.leftInPixels = newTextOffset;
+        textBlock.fontSize = newFontSize;
+    });
+    
+    counterTextBlocks[shapeType] = textBlock;
+    
+    // Animate shape
+    scene.registerBeforeRender(function() {
+        shape.rotation.x += 0.005;
+        shape.rotation.y += 0.01;
+    });
+    
+    return scene;
+};
+
+// Initialize all 5 counter scenes
+const shapeTypes = ['box', 'sphere', 'cylinder', 'torus', 'octahedron'];
+const counterColors = [
+    new BABYLON.Color3.FromHSV(0, 0.8, 0.8),      // Red-ish for box
+    new BABYLON.Color3.FromHSV(120, 0.8, 0.8),    // Green-ish for sphere
+    new BABYLON.Color3.FromHSV(240, 0.8, 0.8),    // Blue-ish for cylinder
+    new BABYLON.Color3.FromHSV(280, 0.8, 0.8),    // Purple-ish for torus
+    new BABYLON.Color3.FromHSV(40, 0.8, 0.8)      // Yellow-ish for octahedron
+];
+
+shapeTypes.forEach((shapeType, index) => {
+    const scene = createCounterScene(index, shapeType, counterColors[index]);
+    counterScenes.push(scene);
+});
+
 const createScene = function () {
     const scene = new BABYLON.Scene(engine);
     // Radial gradient background will be handled by CSS
@@ -138,6 +282,9 @@ const createScene = function () {
             z: (Math.random() - 0.5) * 0.02
         };
 
+        // Store shape type for counter
+        shape.shapeType = shapeType;
+
         // Create unique material with random color for each shape
         const shapeMaterial = new BABYLON.StandardMaterial("shapeMat" + Math.random(), scene);
         shapeMaterial.wireframe = true;
@@ -171,6 +318,9 @@ const createScene = function () {
                 function () {
                     shape.isClicked = true;
                     shape.clickScale = 0; // Track time since click for pop effect
+
+                    // Update counter
+                    updateShapeCounter(shape.shapeType);
 
                     // Play pop sound
                     playPopSound();
@@ -458,6 +608,14 @@ engine.runRenderLoop(function () {
     scene.render();
 });
 
+// Run render loop for each counter engine
+counterEngines.forEach((counterEngine, index) => {
+    counterEngine.runRenderLoop(function () {
+        counterScenes[index].render();
+    });
+});
+
 window.addEventListener("resize", function () {
     engine.resize();
+    counterEngines.forEach(engine => engine.resize());
 });
