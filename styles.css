@@ -187,11 +187,11 @@ footer p {
 /* Mobile viewport media query */
 /* JSON code coloring for splash description */
 .json-const {
-  color: #e7c547;
-  font-weight: bold;
+  color: #d19a66;
 }
 .json-variable {
   color: #6cb4f6;
+  font-weight: bold;
 }
 .json-key {
   color: #e7c547;
