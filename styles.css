@@ -168,11 +168,9 @@ main .link {
 }
 
 main a {
-  color: var(--text-color);
+  color: #f66cc3;
   text-decoration: none;
-  border-bottom: 1px solid var(--text-color);
   pointer-events: auto;
-  font-weight: bold;
 }
 
 footer {
@@ -187,6 +185,32 @@ footer p {
 }
 
 /* Mobile viewport media query */
+/* JSON code coloring for splash description */
+.json-const {
+  color: #e7c547;
+  font-weight: bold;
+}
+.json-variable {
+  color: #6cb4f6;
+}
+.json-key {
+  color: #e7c547;
+}
+.json-string {
+  color: #7ec699;
+}
+.json-number {
+  color: #d19a66;
+}
+.json-boolean {
+  color: #d19a66;
+}
+.json-operator {
+  color: #c678dd;
+}
+.json-punctuation {
+  color: #abb2bf;
+}
 @media (max-width: 768px) {
   header {
     padding-top: 20px;
@@ -207,10 +231,9 @@ footer p {
 
   main p {
     font-size: 0.8em;
-    text-align: center;
   }
 
-  footer p {
+  footer  {
     font-size: 0.7em;
     text-align: center;
   }
