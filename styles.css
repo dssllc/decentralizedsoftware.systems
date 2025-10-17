@@ -1,140 +1,142 @@
 body {
-    margin: 0;
-    padding: 0;
-    overflow: hidden;
-    width: 100%;
-    height: 100vh;
-    font-family: "Libre Baskerville", serif;
-    font-optical-sizing: auto;
-    font-weight: 400;
-    font-style: normal;
+  margin: 0;
+  padding: 0;
+  overflow: hidden;
+  width: 100%;
+  height: 100vh;
+  font-family: "Libre Baskerville", serif;
+  font-optical-sizing: auto;
+  font-weight: 400;
+  font-style: normal;
 }
 
 html {
-    overflow: hidden;
+  overflow: hidden;
 }
 
 #renderCanvas {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    z-index: 0;
-    background: radial-gradient(circle at center, rgb(220, 220, 220), rgb(51, 51, 51));
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 0;
+  background: radial-gradient(circle at center, rgb(220, 220, 220), rgb(51, 51, 51));
 }
 
 #counterContainer {
-    display: flex;
-    flex-direction: row;
-    max-width: 40%;
+  display: flex;
+  flex-direction: row;
+  max-width: 40%;
 
-    align-items: center;
+  align-items: center;
 }
 
 #counterContainer canvas {
-    width: 80px;
-    height: 80px;
-    pointer-events: none;
-    flex-shrink: 0;
+  width: 80px;
+  height: 80px;
+  pointer-events: none;
+  flex-shrink: 0;
 }
 
 #content {
-    position: relative;
-    z-index: 1;
-    color: rgb(220, 220, 220);
-    padding: 20px;
-    pointer-events: none;
-    /* Flexbox layout for vertical structure */
-    display: flex;
-    flex-direction: column;
-    height: 100vh;
-    box-sizing: border-box;
+  position: relative;
+  z-index: 1;
+  color: rgb(220, 220, 220);
+  padding: 20px;
+  pointer-events: none;
+  /* Flexbox layout for vertical structure */
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  box-sizing: border-box;
 }
 
 header {
-    flex-shrink: 0;
-    padding-top: 30px;
+  flex-shrink: 0;
+  padding-top: 30px;
 }
 
 header h1 {
-    font-size: 3em;
-    margin: 0;
-    line-height: .9;
-    text-align: left;
+  font-size: 3em;
+  margin: 0;
+  line-height: .9;
+  text-align: left;
+  opacity: 0.75;
 }
 
 main {
-    flex-grow: 1;
-    display: flex;
-    flex-direction: column;
-    justify-content: flex-end;
-    padding-bottom: 20px;
+  flex-grow: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  padding-bottom: 20px;
 }
 
 .description {
-    padding: 1em 2em;
-    max-width: 40%;
-    background-color: rgb(51, 51, 51);
-    border-radius: 10px;
-    opacity: 0.75;
+  padding: 1em 2em;
+  max-width: 40%;
+  background-color: rgb(51, 51, 51);
+  border-radius: 10px;
+  opacity: 0.75;
 }
 
 main p {
-    font-size: 1em;
+  font-size: 1em;
 }
 
 main a {
-    color: rgb(220, 220, 220);
-    text-decoration: none;
-    border-bottom: 1px solid rgb(220, 220, 220);
-    pointer-events: auto;
+  color: rgb(220, 220, 220);
+  text-decoration: none;
+  border-bottom: 1px solid rgb(220, 220, 220);
+  pointer-events: auto;
 }
 
 footer {
-    flex-shrink: 0;
-    font-size: 0.9em;
+  flex-shrink: 0;
+  font-size: 0.9em;
+  opacity: 0.75;
 }
 
 footer p {
-    font-size: 0.9em;
-    margin: 0;
+  font-size: 0.9em;
+  margin: 0;
 }
 
 /* Mobile viewport media query */
 @media (max-width: 768px) {
-    header {
-        padding-top: 10px;
-    }
+  header {
+    padding-top: 10px;
+  }
 
-    header h1 {
-        font-size: 2em;
-    }
+  header h1 {
+    font-size: 2em;
+  }
 
-    .description {
-        max-width: 90%;
-    }
+  .description {
+    max-width: 90%;
+  }
 
-    main {
-        padding-bottom: 10px;
-    }
+  main {
+    padding-bottom: 10px;
+  }
 
-    main p {
-        font-size: 0.8em;
-    }
+  main p {
+    font-size: 0.8em;
+  }
 
-    footer p {
-        font-size: 0.7em;
-        text-align: center;
-    }
+  footer p {
+    font-size: 0.7em;
+    text-align: center;
+  }
 
-    #counterContainer {
-        max-width: 90%;
-        gap: 5px;
-    }
-    
-    #counterContainer canvas {
-        width: 60px;
-        height: 60px;
-    }
+  #counterContainer {
+    max-width: 90%;
+    gap: 5px;
+  }
+
+  #counterContainer canvas {
+    width: 60px;
+    height: 60px;
+  }
 }
