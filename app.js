@@ -77,7 +77,7 @@ const createCounterScene = function (engineIndex, shapeType, color) {
   // Responsive positioning based on viewport
   const isMobile = window.innerWidth <= 768;
   const shapeXPosition = isMobile ? -0.3 : -0.2; // Closer on mobile
-  const textOffset = isMobile ? -4 : -6; // Closer on mobile
+  const textOffset = isMobile ? -4 : -2; // Closer on mobile
 
   shape.position = new BABYLON.Vector3(shapeXPosition, 0, 0); // Slightly left for number on right
 
