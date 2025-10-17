@@ -1,3 +1,44 @@
+/* ========================================
+   COLOR SCHEME CONFIGURATION
+   ========================================
+
+   To experiment with different color schemes, modify the values below:
+
+   - --color-light: Main light text/element color
+   - --color-dark: Dark background elements
+   - --bg-gradient-light/dark: Background gradient colors
+   - --bloom-*: Glow effects in the center
+   - --vignette-dark: Edge darkening
+   - --ray-color: Sunburst ray color
+*/
+
+:root {
+  /* Color Scheme Configuration */
+  /* Main Colors */
+  --color-light: rgb(220, 220, 220);
+  --color-dark: rgb(51, 51, 51);
+  --color-darkest: rgb(40, 40, 40);
+
+  /* Background gradient stops */
+  --bg-gradient-light: rgb(220, 220, 220);
+  --bg-gradient-dark: rgb(51, 51, 51);
+
+  /* Bloom/Glow effects */
+  --bloom-white: rgba(255, 255, 255, 0.15);
+  --bloom-light: rgba(240, 240, 240, 0.1);
+  --bloom-medium: rgba(220, 220, 220, 0.05);
+
+  /* Vignette */
+  --vignette-dark: rgba(0, 0, 0, 0.3);
+
+  /* Burst rays */
+  --ray-color: rgba(40, 40, 40, 0.2);
+
+  /* Typography */
+  --text-color: rgb(220, 220, 220);
+  --text-opacity: 0.75;
+}
+
 body {
   margin: 0;
   padding: 0;
@@ -10,13 +51,13 @@ body {
   font-style: normal;
   background:
     /* Light bloom from center */
-    radial-gradient(circle at center, rgba(255, 255, 255, 0.15) 0%, transparent 30%),
-    radial-gradient(circle at center, rgba(240, 240, 240, 0.1) 0%, transparent 40%),
-    radial-gradient(circle at center, rgba(220, 220, 220, 0.05) 0%, transparent 50%),
+    radial-gradient(circle at center, var(--bloom-white) 0%, transparent 30%),
+    radial-gradient(circle at center, var(--bloom-light) 0%, transparent 40%),
+    radial-gradient(circle at center, var(--bloom-medium) 0%, transparent 50%),
     /* Vignette darkness at edges */
-    radial-gradient(circle at center, transparent 40%, rgba(0, 0, 0, 0.3) 100%),
+    radial-gradient(circle at center, transparent 40%, var(--vignette-dark) 100%),
     /* Base radial gradient */
-    radial-gradient(circle at center, rgb(220, 220, 220), rgb(51, 51, 51));
+    radial-gradient(circle at center, var(--bg-gradient-light), var(--bg-gradient-dark));
   filter: contrast(1.05) brightness(1.02);
 }
 
@@ -44,8 +85,8 @@ html {
   background: repeating-conic-gradient(from 0deg at 50% 100%,
       transparent 0deg,
       transparent 2.8deg,
-      rgba(40, 40, 40, 0.2) 2.8deg,
-      rgba(40, 40, 40, 0.2) 3deg);
+      var(--ray-color) 2.8deg,
+      var(--ray-color) 3deg);
   pointer-events: none;
 }
 
@@ -80,7 +121,7 @@ html {
 #content {
   position: relative;
   z-index: 3;
-  color: rgb(220, 220, 220);
+  color: var(--text-color);
   padding: 20px;
   pointer-events: none;
   /* Flexbox layout for vertical structure */
@@ -100,7 +141,7 @@ header h1 {
   margin: 0;
   line-height: .9;
   text-align: left;
-  opacity: 0.75;
+  opacity: var(--text-opacity);
 }
 
 main {
@@ -114,9 +155,9 @@ main {
 .description {
   padding: 1em 2em;
   max-width: 40%;
-  background-color: rgb(51, 51, 51);
+  background-color: var(--color-dark);
   border-radius: 10px;
-  opacity: 0.75;
+  opacity: var(--text-opacity);
 }
 
 main p {
@@ -128,9 +169,9 @@ main .link {
 }
 
 main a {
-  color: rgb(220, 220, 220);
+  color: var(--text-color);
   text-decoration: none;
-  border-bottom: 1px solid rgb(220, 220, 220);
+  border-bottom: 1px solid var(--text-color);
   pointer-events: auto;
   font-weight: bold;
 }
@@ -138,7 +179,7 @@ main a {
 footer {
   flex-shrink: 0;
   font-size: 0.9em;
-  opacity: 0.75;
+  opacity: var(--text-opacity);
 }
 
 footer p {

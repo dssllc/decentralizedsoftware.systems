@@ -1,3 +1,40 @@
+// Change these values to experiment with different color schemes
+const COLOR_CONFIG = {
+  // Shape colors (HSV: Hue, Saturation, Value/Brightness)
+  shapes: {
+    box: { h: 0, s: 0.8, v: 0.8 },          // Red-ish
+    sphere: { h: 120, s: 0.8, v: 0.8 },     // Green-ish
+    cylinder: { h: 240, s: 0.8, v: 0.8 },   // Blue-ish
+    torus: { h: 280, s: 0.8, v: 0.8 },      // Purple-ish
+    octahedron: { h: 40, s: 0.8, v: 0.8 }   // Yellow-ish
+  },
+
+  // Mountain/terrain colors (RGB: 0-1 scale)
+  mountain: {
+    r: 0.2,
+    g: 0.2,
+    b: 0.2
+  },
+
+  // Counter text color (RGB string)
+  counterText: "rgb(220, 220, 220)",
+
+  // Floating shape random colors (HSV range)
+  floatingShapes: {
+    hueMin: 0,
+    hueMax: 360,
+    saturation: 0.7,
+    brightnessMin: 0.6,
+    brightnessMax: 0.9
+  },
+
+  // Star particles (grayscale brightness range: 0-1)
+  stars: {
+    brightnessMin: 0.4,
+    brightnessMax: 1.0
+  }
+};
+
 const canvas = document.getElementById("renderCanvas");
 const engine = new BABYLON.Engine(canvas, true);
 
@@ -31,7 +68,7 @@ function updateShapeCounter(shapeType) {
     textBlock.color = "white";
     setTimeout(() => {
       textBlock.fontSize = 18;
-      textBlock.color = "rgb(220, 220, 220)";
+      textBlock.color = COLOR_CONFIG.counterText;
     }, 150);
   }
 }
@@ -82,10 +119,9 @@ const createCounterScene = function (engineIndex, shapeType, color) {
 
   // Responsive positioning based on viewport
   const isMobile = window.innerWidth <= 768;
-  const shapeXPosition = isMobile ? -0.3 : -0.2; // Closer on mobile
-  const textOffset = isMobile ? -4 : -2; // Closer on mobile
-
-  shape.position = new BABYLON.Vector3(shapeXPosition, 0, 0); // Slightly left for number on right
+  const shapeXPosition = isMobile ? -0.3 : -0.2;
+  const textOffset = isMobile ? -4 : -4;
+  shape.position = new BABYLON.Vector3(shapeXPosition, 0, 0);
 
   // Create wireframe material
   const material = new BABYLON.StandardMaterial("counterMat", scene);
@@ -97,7 +133,7 @@ const createCounterScene = function (engineIndex, shapeType, color) {
   // Create text block
   const textBlock = new BABYLON.GUI.TextBlock();
   textBlock.text = "0";
-  textBlock.color = "rgb(220, 220, 220)";
+  textBlock.color = COLOR_CONFIG.counterText;
   textBlock.fontSize = isMobile ? 14 : 16; // Smaller font on mobile
   textBlock.fontFamily = "Libre Baskerville";
   textBlock.fontWeight = "700";
@@ -138,13 +174,10 @@ const createCounterScene = function (engineIndex, shapeType, color) {
 
 // Initialize all 5 counter scenes
 const shapeTypes = ['box', 'sphere', 'cylinder', 'torus', 'octahedron'];
-const counterColors = [
-  new BABYLON.Color3.FromHSV(0, 0.8, 0.8),      // Red-ish for box
-  new BABYLON.Color3.FromHSV(120, 0.8, 0.8),    // Green-ish for sphere
-  new BABYLON.Color3.FromHSV(240, 0.8, 0.8),    // Blue-ish for cylinder
-  new BABYLON.Color3.FromHSV(280, 0.8, 0.8),    // Purple-ish for torus
-  new BABYLON.Color3.FromHSV(40, 0.8, 0.8)      // Yellow-ish for octahedron
-];
+const counterColors = shapeTypes.map(shapeType => {
+  const config = COLOR_CONFIG.shapes[shapeType];
+  return new BABYLON.Color3.FromHSV(config.h, config.s, config.v);
+});
 
 shapeTypes.forEach((shapeType, index) => {
   const scene = createCounterScene(index, shapeType, counterColors[index]);
@@ -203,11 +236,19 @@ const createScene = function () {
   const tileSubdiv = 20; // Low-poly effect
   const planes = [];
 
-  // Material with wireframe - dark gray
+  // Material with wireframe - configurable color
   const material = new BABYLON.StandardMaterial("material", scene);
   material.wireframe = true;
-  material.emissiveColor = new BABYLON.Color3(0.2, 0.2, 0.2);
-  material.diffuseColor = new BABYLON.Color3(0.2, 0.2, 0.2);
+  material.emissiveColor = new BABYLON.Color3(
+    COLOR_CONFIG.mountain.r,
+    COLOR_CONFIG.mountain.g,
+    COLOR_CONFIG.mountain.b
+  );
+  material.diffuseColor = new BABYLON.Color3(
+    COLOR_CONFIG.mountain.r,
+    COLOR_CONFIG.mountain.g,
+    COLOR_CONFIG.mountain.b
+  );
 
   // Floating shapes system
   const floatingShapes = [];
@@ -295,11 +336,11 @@ const createScene = function () {
     const shapeMaterial = new BABYLON.StandardMaterial("shapeMat" + Math.random(), scene);
     shapeMaterial.wireframe = true;
 
-    // Generate random vibrant color
+    // Generate random vibrant color using config
     const randomColor = BABYLON.Color3.FromHSV(
-      Math.random() * 360,  // Hue: random across full spectrum
-      0.7 + Math.random() * 0.3,  // Saturation: 70-100% for vibrant colors
-      0.6 + Math.random() * 0.4   // Value/Brightness: 60-100%
+      COLOR_CONFIG.floatingShapes.hueMin + Math.random() * (COLOR_CONFIG.floatingShapes.hueMax - COLOR_CONFIG.floatingShapes.hueMin),
+      COLOR_CONFIG.floatingShapes.saturation,
+      COLOR_CONFIG.floatingShapes.brightnessMin + Math.random() * (COLOR_CONFIG.floatingShapes.brightnessMax - COLOR_CONFIG.floatingShapes.brightnessMin)
     );
 
     shapeMaterial.emissiveColor = randomColor;
@@ -313,6 +354,7 @@ const createScene = function () {
 
     // Shrink and disappear properties
     shape.isClicked = false;
+    shape.hasBeenCounted = false; // Prevent double-click counting
     shape.shrinkSpeed = 0.05;
     shape.originalScaling = shape.scaling.clone();
 
@@ -322,7 +364,13 @@ const createScene = function () {
       new BABYLON.ExecuteCodeAction(
         BABYLON.ActionManager.OnPickTrigger,
         function () {
+          // Prevent double-clicking
+          if (shape.hasBeenCounted) {
+            return;
+          }
+
           shape.isClicked = true;
+          shape.hasBeenCounted = true; // Mark as counted
           shape.clickScale = 0; // Track time since click for pop effect
 
           // Update counter
@@ -337,39 +385,52 @@ const createScene = function () {
           shape.rotationSpeed.z *= 3;
 
           // Create particle burst effect
-          const particleSystem = new BABYLON.ParticleSystem("particles", 30, scene);
-          particleSystem.particleTexture = new BABYLON.Texture("https://assets.babylonjs.com/textures/flare.png", scene);
+          const particleSystem = new BABYLON.ParticleSystem("particles_" + Math.random(), 200, scene);
+
+          // Load texture with proper alpha handling
+          const texture = new BABYLON.Texture("https://assets.babylonjs.com/textures/flare.png", scene);
+          particleSystem.particleTexture = texture;
+
+          // Emitter at the shape position
           particleSystem.emitter = shape.position.clone();
-          particleSystem.minEmitBox = new BABYLON.Vector3(-0.5, -0.5, -0.5);
-          particleSystem.maxEmitBox = new BABYLON.Vector3(0.5, 0.5, 0.5);
+          particleSystem.minEmitBox = new BABYLON.Vector3(0, 0, 0);
+          particleSystem.maxEmitBox = new BABYLON.Vector3(0, 0, 0);
 
-          // Colors matching the shape
-          particleSystem.color1 = new BABYLON.Color4(shapeMaterial.emissiveColor.r, shapeMaterial.emissiveColor.g, shapeMaterial.emissiveColor.b, 1);
-          particleSystem.color2 = new BABYLON.Color4(shapeMaterial.emissiveColor.r * 0.7, shapeMaterial.emissiveColor.g * 0.7, shapeMaterial.emissiveColor.b * 0.7, 0.5);
-          particleSystem.colorDead = new BABYLON.Color4(0, 0, 0, 0);
+          // Bright colors that will tint the texture
+          const shapeColor = shapeMaterial.emissiveColor;
+          particleSystem.color1 = new BABYLON.Color4(shapeColor.r * 2, shapeColor.g * 2, shapeColor.b * 2, 1);
+          particleSystem.color2 = new BABYLON.Color4(shapeColor.r * 1.5, shapeColor.g * 1.5, shapeColor.b * 1.5, 1);
+          particleSystem.colorDead = new BABYLON.Color4(shapeColor.r, shapeColor.g, shapeColor.b, 0); // Fade out
 
-          particleSystem.minSize = 0.3;
-          particleSystem.maxSize = 0.8;
-          particleSystem.minLifeTime = 0.3;
-          particleSystem.maxLifeTime = 0.6;
-          particleSystem.emitRate = 100;
-          particleSystem.blendMode = BABYLON.ParticleSystem.BLENDMODE_ADD;
-          particleSystem.gravity = new BABYLON.Vector3(0, 0, 0); // No gravity for spherical burst
-          particleSystem.direction1 = new BABYLON.Vector3(-1, -1, -1); // All directions
-          particleSystem.direction2 = new BABYLON.Vector3(1, 1, 1); // All directions
-          particleSystem.minEmitPower = 4;
-          particleSystem.maxEmitPower = 8;
-          particleSystem.updateSpeed = 0.02;
+          // Particle settings
+          particleSystem.minSize = 1.5;
+          particleSystem.maxSize = 3.0;
+          particleSystem.minLifeTime = 0.5;
+          particleSystem.maxLifeTime = 1.0;
+          particleSystem.emitRate = 1000;
+          particleSystem.blendMode = BABYLON.ParticleSystem.BLENDMODE_ONEONE; // Proper alpha blending
+          particleSystem.gravity = new BABYLON.Vector3(0, -8, 0);
+          particleSystem.direction1 = new BABYLON.Vector3(-1, -1, -1);
+          particleSystem.direction2 = new BABYLON.Vector3(1, 1, 1);
+          particleSystem.minEmitPower = 12;
+          particleSystem.maxEmitPower = 25;
+          particleSystem.updateSpeed = 0.01;
+
+          // Add angular velocity for spinning particles
+          particleSystem.minAngularSpeed = -2;
+          particleSystem.maxAngularSpeed = 2;
 
           particleSystem.start();
 
-          // Auto-dispose particle system after burst
+          // Stop emitting quickly for burst effect
           setTimeout(function () {
             particleSystem.stop();
-            setTimeout(function () {
-              particleSystem.dispose();
-            }, 1000);
-          }, 100);
+          }, 50); // Very short burst
+
+          // Auto-dispose particle system after particles die
+          setTimeout(function () {
+            particleSystem.dispose();
+          }, 2000); // Longer time since particles live longer
         }
       )
     );
@@ -396,9 +457,10 @@ const createScene = function () {
     particle.position.y = Math.random() * 15;
     particle.position.z = camera.position.z + Math.random() * 150 + 100;
 
-    // Create material - light gray to white to match gradient
+    // Create material - grayscale using config
     const particleMaterial = new BABYLON.StandardMaterial("flowParticleMat" + Math.random(), scene);
-    const brightness = 0.7 + Math.random() * 0.3;
+    const brightness = COLOR_CONFIG.stars.brightnessMin +
+                      Math.random() * (COLOR_CONFIG.stars.brightnessMax - COLOR_CONFIG.stars.brightnessMin);
     const particleColor = new BABYLON.Color3(brightness, brightness, brightness);
     particleMaterial.emissiveColor = particleColor;
     particleMaterial.diffuseColor = particleColor;
