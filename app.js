@@ -120,7 +120,7 @@ const createCounterScene = function (engineIndex, shapeType, color) {
   // Responsive positioning based on viewport
   const isMobile = window.innerWidth <= 768;
   const shapeXPosition = isMobile ? -0.3 : -0.2;
-  const textOffset = isMobile ? -4 : -4;
+  const textOffset = isMobile ? -2 : -2;
   shape.position = new BABYLON.Vector3(shapeXPosition, 0, 0);
 
   // Create wireframe material
@@ -153,7 +153,7 @@ const createCounterScene = function (engineIndex, shapeType, color) {
   window.addEventListener("resize", function () {
     const isMobileNow = window.innerWidth <= 768;
     const newShapeX = isMobileNow ? -0.15 : -0.2;
-    const newTextOffset = isMobileNow ? -4 : -6;
+    const newTextOffset = isMobileNow ? -2 : -2;
     const newFontSize = isMobileNow ? 14 : 16;
 
     shape.position.x = newShapeX;
@@ -265,7 +265,7 @@ const createScene = function () {
     gainNode.connect(audioContext.destination);
 
     // Randomize the pitch slightly for variety
-    const pitchVariation = 0.8 + Math.random() * 0.4; // 0.8x to 1.2x pitch
+    const pitchVariation = 0.2 + Math.random() * 0.4; // 0.8x to 1.2x pitch
     const startFreq = 800 * pitchVariation;
     const endFreq = 200 * pitchVariation;
 
@@ -387,8 +387,8 @@ const createScene = function () {
           // Create particle burst effect
           const particleSystem = new BABYLON.ParticleSystem("particles_" + Math.random(), 200, scene);
 
-          // Load texture with proper alpha handling
-          const texture = new BABYLON.Texture("https://assets.babylonjs.com/textures/flare.png", scene);
+          // Load texture with proper alpha handling (local file)
+          const texture = new BABYLON.Texture("lib/babylon/textures/flare.png", scene);
           particleSystem.particleTexture = texture;
 
           // Emitter at the shape position
