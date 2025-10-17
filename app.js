@@ -52,6 +52,12 @@ const createCounterScene = function (engineIndex, shapeType, color) {
   // Create GUI
   const advancedTexture = BABYLON.GUI.AdvancedDynamicTexture.CreateFullscreenUI("CounterUI" + engineIndex, true, scene);
 
+  // Prevent the canvas from receiving keyboard focus
+  const counterCanvas = document.getElementById("counterCanvas" + engineIndex);
+  if (counterCanvas) {
+    counterCanvas.setAttribute('tabindex', '-1');
+  }
+
   const size = 0.5;
   let shape;
 
