@@ -106,9 +106,8 @@ html {
 #counterContainer {
   display: flex;
   flex-direction: row;
-  max-width: 40%;
-
   align-items: center;
+  justify-content: space-between;
 }
 
 #counterContainer canvas {
@@ -150,11 +149,11 @@ main {
   flex-direction: column;
   justify-content: flex-end;
   padding-bottom: 20px;
+  max-width: 45%;
 }
 
 .description {
   padding: 1em 2em;
-  max-width: 40%;
   background-color: var(--color-dark);
   border-radius: 10px;
   opacity: var(--text-opacity);
@@ -199,6 +198,10 @@ footer p {
 
   .description {
     padding: 0.5em 1em;
+    max-width: 100%;
+  }
+
+  main {
     max-width: 100%;
   }
 
